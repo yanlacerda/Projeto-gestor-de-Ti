@@ -1,5 +1,4 @@
 # models.py
-# Projeto: Sistema de Gestão de TI
 
 from datetime import datetime
 from sqlalchemy import (
@@ -7,10 +6,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-# ======= BASE DO BANCO =======
 Base = declarative_base()
-
-# ======= TABELAS PRINCIPAIS =======
 
 class Tecnico(Base):
     __tablename__ = "tecnicos"
@@ -22,63 +18,59 @@ class Tecnico(Base):
     chamados = relationship("Chamado", back_populates="tecnico")
 
     def __repr__(self):
-        return f"<Técnico {self.nome}>"
+        return f"Técnico: {self.nome}"
 
 
 class Chamado(Base):
     __tablename__ = "chamados"
 
     id = Column(Integer, primary_key=True)
-    categoria = Column(String(100), nullable=False)   # Exemplo: Rede, Wi-Fi, Impressora
-    prioridade = Column(String(50), nullable=False)   # Alta / Média / Baixa
-    status = Column(String(50), default="Aberto")     # Aberto / Em andamento / Fechado
+    categoria = Column(String(100), nullable=False)
+    prioridade = Column(String(50), nullable=False)
+    status = Column(String(50), default="Aberto")
     descricao = Column(String(255))
     data_abertura = Column(DateTime, default=datetime.now)
-    data_fechamento = Column(DateTime, nullable=True)
+    data_fechamento = Column(DateTime)
 
     tecnico_id = Column(Integer, ForeignKey("tecnicos.id"))
     tecnico = relationship("Tecnico", back_populates="chamados")
 
     def __repr__(self):
-        return f"<Chamado #{self.id} - {self.categoria} ({self.status})>"
+        return f"Chamado {self.id} - {self.categoria} ({self.status})"
 
 
 class IP(Base):
-    __tablename__ = "ips"
+    __tablename__ = "enderecos_ip"
 
     id = Column(Integer, primary_key=True)
     endereco = Column(String(15), nullable=False, unique=True)
     mac = Column(String(17))
     reservado = Column(Boolean, default=False)
-    status = Column(String(20), default="Livre")  # Livre / Alocado
+    status = Column(String(20), default="Disponível")
 
     def __repr__(self):
-        return f"<IP {self.endereco} - {self.status}>"
+        return f"IP {self.endereco} - {self.status}"
 
 
 class Ativo(Base):
-    __tablename__ = "ativos"
+    __tablename__ = "equipamentos"
 
     id = Column(Integer, primary_key=True)
     nome = Column(String(120), nullable=False)
-    tipo = Column(String(50))  # Exemplo: Switch, Notebook, Roteador
-    ip_id = Column(Integer, ForeignKey("ips.id"))
+    tipo = Column(String(50))
+    ip_id = Column(Integer, ForeignKey("enderecos_ip.id"))
     ip = relationship("IP")
 
     def __repr__(self):
-        return f"<Ativo {self.nome} ({self.tipo})>"
+        return f"Ativo: {self.nome} ({self.tipo})"
 
 
-# ======= CONEXÃO COM O BANCO =======
-
-def criar_engine(database_url="sqlite:///gestao_ti.db"):
-    """Cria o objeto Engine do SQLAlchemy."""
-    return create_engine(database_url, echo=False, future=True)
+def criar_engine(url_banco="sqlite:///suporte_ti.db"):
+    return create_engine(url_banco, echo=False, future=True)
 
 
-def criar_sessao(database_url="sqlite:///gestao_ti.db"):
-    """Cria as tabelas (se não existirem) e retorna uma sessão."""
-    engine = criar_engine(database_url)
+def criar_sessao(url_banco="sqlite:///suporte_ti.db"):
+    engine = criar_engine(url_banco)
     Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
-    return Session()
+    Sessao = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+    return Sessao()
