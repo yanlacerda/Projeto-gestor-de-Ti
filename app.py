@@ -1,144 +1,131 @@
-# app.py
-# Projeto: Sistema de Gestão de TI
+# sistema_ti.py
 
 from datetime import datetime
 from models import criar_sessao, Chamado, Tecnico, IP, Ativo
 
-# Cria sessão com o banco de dados
-session = criar_sessao()
+sessao = criar_sessao()
 
-# ====== CADASTROS ======
-
-def novo_tecnico():
+def cadastrar_tecnico():
     nome = input("Nome do técnico: ").strip()
     email = input("E-mail: ").strip()
-    tecnico = Tecnico(nome=nome, email=email)
-    session.add(tecnico)
-    session.commit()
-    print("✅ Técnico cadastrado com sucesso!")
+    novo = Tecnico(nome=nome, email=email)
+    sessao.add(novo)
+    sessao.commit()
+    print("Técnico cadastrado.")
 
 
-def novo_chamado():
-    categoria = input("Categoria (Rede, Wi-Fi, Impressora...): ").strip()
+def abrir_chamado():
+    categoria = input("Categoria (Rede, Wi-Fi, Impressora etc.): ").strip()
     prioridade = input("Prioridade (Alta / Média / Baixa): ").strip()
-    descricao = input("Descrição do problema: ").strip()
+    descricao = input("Descreva o problema: ").strip()
 
-    chamado = Chamado(
-        categoria=categoria,
-        prioridade=prioridade,
-        descricao=descricao
-    )
-    session.add(chamado)
-    session.commit()
-    print(f"📋 Chamado registrado com sucesso! ID: {chamado.id}")
+    novo = Chamado(categoria=categoria, prioridade=prioridade, descricao=descricao)
+    sessao.add(novo)
+    sessao.commit()
+    print(f"Chamado criado. Código: {novo.id}")
 
 
-def listar_chamados():
-    chamados = session.query(Chamado).all()
-    if not chamados:
+def mostrar_chamados():
+    lista = sessao.query(Chamado).all()
+    if not lista:
         print("Nenhum chamado encontrado.")
         return
-    print("\n=== LISTA DE CHAMADOS ===")
-    for c in chamados:
+    print("\n--- Chamados ---")
+    for c in lista:
         print(f"[{c.id}] {c.categoria} | {c.status} | Prioridade: {c.prioridade}")
 
 
-def alterar_status():
-    listar_chamados()
+def atualizar_status():
+    mostrar_chamados()
     try:
-        chamado_id = int(input("\nDigite o ID do chamado: "))
+        codigo = int(input("\nInforme o ID do chamado: "))
     except ValueError:
         print("ID inválido.")
         return
 
     novo_status = input("Novo status (Aberto / Em atendimento / Fechado): ").strip()
-    chamado = session.get(Chamado, chamado_id)
+    chamado = sessao.get(Chamado, codigo)
 
     if chamado:
         chamado.status = novo_status
         if novo_status.lower() == "fechado":
             chamado.data_fechamento = datetime.now()
-        session.commit()
-        print("✅ Status atualizado com sucesso!")
+        sessao.commit()
+        print("Status atualizado.")
     else:
-        print("❌ Chamado não encontrado.")
+        print("Chamado não encontrado.")
 
 
-def novo_ip():
+def cadastrar_ip():
     endereco = input("Endereço IP: ").strip()
     mac = input("Endereço MAC (opcional): ").strip() or None
-    reservado = input("Reservado? (s/n): ").strip().lower() == "s"
-    status = "Alocado" if reservado else "Livre"
+    reservado = input("Reservar este IP? (s/n): ").strip().lower() == "s"
+    status = "Ocupado" if reservado else "Disponível"
 
-    ip = IP(endereco=endereco, mac=mac, reservado=reservado, status=status)
-    session.add(ip)
-    session.commit()
-    print("💾 IP cadastrado com sucesso!")
+    novo = IP(endereco=endereco, mac=mac, reservado=reservado, status=status)
+    sessao.add(novo)
+    sessao.commit()
+    print("Endereço IP cadastrado.")
 
 
 def listar_ips():
-    ips = session.query(IP).all()
-    if not ips:
+    lista = sessao.query(IP).all()
+    if not lista:
         print("Nenhum IP cadastrado.")
         return
-    print("\n=== LISTA DE ENDEREÇOS IP ===")
-    for i in ips:
-        print(f"[{i.id}] {i.endereco} - {i.status}")
+    print("\n--- Endereços IP ---")
+    for ip in lista:
+        print(f"[{ip.id}] {ip.endereco} - {ip.status}")
 
 
-def novo_ativo():
+def cadastrar_ativo():
     nome = input("Nome do ativo: ").strip()
-    tipo = input("Tipo (Computador, Notebook, Roteador, etc.): ").strip()
+    tipo = input("Tipo (Computador, Notebook, Roteador etc.): ").strip()
     listar_ips()
 
     try:
-        ip_id = int(input("ID do IP a vincular: "))
+        ip_id = int(input("Informe o ID do IP a associar: "))
     except ValueError:
         print("ID inválido.")
         return
 
     ativo = Ativo(nome=nome, tipo=tipo, ip_id=ip_id)
-    session.add(ativo)
-    session.commit()
-    print("💻 Ativo cadastrado com sucesso!")
+    sessao.add(ativo)
+    sessao.commit()
+    print("Ativo registrado.")
 
 
-# ====== MENU PRINCIPAL ======
-
-def menu_principal():
+def menu():
     while True:
         print("""
-==============================
-     SISTEMA DE GESTÃO DE TI
-==============================
-1 - Cadastrar Técnico
-2 - Abrir Chamado
-3 - Listar Chamados
-4 - Atualizar Status
+1 - Cadastrar técnico
+2 - Abrir chamado
+3 - Ver chamados
+4 - Alterar status
 5 - Cadastrar IP
-6 - Cadastrar Ativo
+6 - Registrar ativo
 0 - Sair
 """)
         opcao = input("Escolha uma opção: ").strip()
 
         if opcao == "1":
-            novo_tecnico()
+            cadastrar_tecnico()
         elif opcao == "2":
-            novo_chamado()
+            abrir_chamado()
         elif opcao == "3":
-            listar_chamados()
+            mostrar_chamados()
         elif opcao == "4":
-            alterar_status()
+            atualizar_status()
         elif opcao == "5":
-            novo_ip()
+            cadastrar_ip()
         elif opcao == "6":
-            novo_ativo()
+            cadastrar_ativo()
         elif opcao == "0":
-            print("Encerrando o sistema... Até logo!")
+            print("Encerrando o sistema. Até logo.")
             break
         else:
-            print("⚠️ Opção inválida. Tente novamente.")
+            print("Opção inválida, tente novamente.")
 
 
 if __name__ == "__main__":
-    menu_principal()
+    menu()
